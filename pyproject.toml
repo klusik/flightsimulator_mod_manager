@@ -17,6 +17,7 @@ dependencies = []
 where = ["src"]
 
 [tool.ruff]
+# Target the minimum supported version; newer interpreters remain supported.
 target-version = "py313"
 line-length = 100
 src = ["src", "tests"]
@@ -29,6 +30,7 @@ ignore = ["D203", "D213"]
 "tests/**/*.py" = ["D100", "D103"]
 
 [tool.mypy]
+# Check compatibility with the minimum supported version, not the local interpreter version.
 python_version = "3.13"
 strict = true
 mypy_path = "src"

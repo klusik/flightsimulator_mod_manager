@@ -445,13 +445,17 @@ The repository must include:
 - `pyproject.toml` with project metadata and Ruff, mypy, and pytest configuration;
 - `requirements.txt` for runtime dependencies;
 - `requirements-dev.txt` for development tools;
+- `requirements-build.txt` for isolated executable-build dependencies;
 - `README.md` with setup, development commands, safety behavior, and supported Python versions;
 - `AGENTS.md` containing implementation constraints for coding agents;
 - `.gitignore`;
+- `build.bat` for producing the standalone Windows executable;
 - `deploy.bat` for producing a clean source-distribution ZIP under `dist`;
 - a `src` package layout and mirrored `tests` structure;
-- a GitHub Actions workflow running on Windows with Python 3.13.
+- a GitHub Actions workflow running on Windows against the minimum supported Python 3.13 and the newest stable Python version adopted by the project.
 
 Continuous integration must run Ruff formatting checks, Ruff linting, `mypy --strict`, and pytest without Flight Simulator installed and without accessing any real Community directory. A license must be selected by the repository owner before public distribution; do not infer or add one automatically.
 
-`deploy.bat` must be runnable from any working directory, validate its required inputs, and create `dist\flightsimulator_mod_manager.zip`. Include `src`, `README.md`, `SPECIFICATION.md`, `pyproject.toml`, `requirements.txt`, `.python-version`, and `LICENSE` when present. Exclude tests, Git and GitHub metadata, agent instructions, development requirements, caches, logs, local settings, and virtual environments. Repeated execution may replace only that exact generated archive.
+`deploy.bat` must be runnable from any working directory, validate its required inputs, and create `dist\flightsimulator_mod_manager.zip`. Include `src`, `README.md`, `SPECIFICATION.md`, `pyproject.toml`, `requirements.txt`, and `LICENSE` when present. Exclude tests, Git and GitHub metadata, agent instructions, development requirements, caches, logs, local settings, and virtual environments. Repeated execution may replace only that exact generated archive.
+
+`build.bat` must also be runnable from any working directory. It selects the newest installed Python 3 interpreter, validates that it is Python 3.13 or newer, validates the application entry point, creates an isolated temporary virtual environment, installs runtime and build requirements, and invokes PyInstaller in one-file windowed mode. The only persistent build artifact is `dist\FlightSimulatorModManager.exe`; temporary environments, generated `.spec` files, and PyInstaller work output must be removed after success or failure. It may replace only that exact executable and must not clear unrelated contents from `dist`.

@@ -16,10 +16,10 @@ The project is currently in its specification and scaffolding phase. Application
 
 ## Development setup
 
-Create and activate a Python 3.13 virtual environment, then install the development requirements:
+Create and activate a virtual environment with the newest installed Python 3 interpreter, then install the development requirements. The selected interpreter must be Python 3.13 or newer:
 
 ```powershell
-py -3.13 -m venv .venv
+py -3 -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements-dev.txt
@@ -36,6 +36,16 @@ python -m pytest
 
 Tests must use temporary directories and must never operate on an actual simulator installation.
 
+## Build the Windows executable
+
+After the application entry point exists, run:
+
+```powershell
+.\build.bat
+```
+
+The script selects the newest installed Python 3 interpreter, requires it to be Python 3.13 or newer, and needs internet access for installing the isolated build dependency. It creates a temporary virtual environment outside the repository, builds a single windowed executable with PyInstaller, writes `dist\FlightSimulatorModManager.exe`, and removes its temporary environment, work directory, and generated specification file. It replaces only the executable with that exact output name and does not remove other files from `dist`.
+
 ## Create a deployment archive
 
 Run the deployment script from any working directory:
@@ -44,7 +54,7 @@ Run the deployment script from any working directory:
 .\deploy.bat
 ```
 
-It creates `dist\flightsimulator_mod_manager.zip`, replacing only an existing archive with that exact name. The ZIP contains the application source, runtime requirements, project metadata, specification, README, Python version declaration, and `LICENSE` when one exists. Development tools, tests, repository metadata, caches, and local settings are excluded.
+It creates `dist\flightsimulator_mod_manager.zip`, replacing only an existing archive with that exact name. The ZIP contains the application source, runtime requirements, project metadata, specification, README, and `LICENSE` when one exists. Development tools, tests, repository metadata, caches, and local settings are excluded.
 
 ## Project status
 

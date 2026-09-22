@@ -43,6 +43,7 @@ Tests must use temporary directories and synthetic manifests. They must never re
 ## Repository hygiene
 
 - Keep generated files, virtual environments, caches, logs, and local settings out of Git.
+- Keep executable build dependencies in `requirements-build.txt`, separate from runtime and development dependencies.
 - Update `SPECIFICATION.md` and `README.md` when an approved behavior or workflow changes.
 - Do not add a license until the repository owner selects one.
 - Do not commit or push unless the user explicitly asks.
