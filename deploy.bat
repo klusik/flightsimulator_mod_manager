@@ -12,7 +12,7 @@ if not exist "src\fs24_mod_manager\__init__.py" (
     exit /b 1
 )
 
-for %%F in (README.md SPECIFICATION.md pyproject.toml requirements.txt) do (
+for %%F in (README.md SPECIFICATION.md ARCHITECTURE.md pyproject.toml requirements.txt) do (
     if not exist "%%F" (
         echo ERROR: Required deployment file not found: %%F
         exit /b 1
@@ -37,7 +37,7 @@ if exist "%ARCHIVE_PATH%" (
 
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
     "$ErrorActionPreference = 'Stop';" ^
-    "$deploymentFiles = @('src', 'README.md', 'SPECIFICATION.md', 'pyproject.toml', 'requirements.txt');" ^
+    "$deploymentFiles = @('src', 'README.md', 'SPECIFICATION.md', 'ARCHITECTURE.md', 'pyproject.toml', 'requirements.txt');" ^
     "if (Test-Path -LiteralPath 'LICENSE') { $deploymentFiles += 'LICENSE' };" ^
     "Compress-Archive -LiteralPath $deploymentFiles -DestinationPath '%ARCHIVE_PATH%' -CompressionLevel Optimal -Force"
 

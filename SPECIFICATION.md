@@ -139,7 +139,10 @@ Use one main window with:
 - configured disabled-mods path and a **Choose…** action;
 - a rescan/refresh action;
 - a searchable table of packages;
+- horizontal and vertical table scrollbars;
 - columns for name, version, directory, and status;
+- redundant state symbols, text, and color for quick recognition and accessibility;
+- select-all and clear-selection actions that operate on currently visible filtered rows;
 - **Enable** and **Disable** actions, disabled when they do not apply;
 - a status line with package counts and the result of the latest operation;
 - a compact error dialog for failed operations, with details recorded in the log.
@@ -434,6 +437,7 @@ The filesystem may change through Explorer or another application while the mana
 - Search display name, directory name, creator/manufacturer, and version case-insensitively.
 - Show enabled, disabled, conflicted, and invalid states with text or icons; color must not be the only indicator.
 - Make all actions keyboard accessible with a logical tab order and documented shortcuts.
+- Use `Ctrl+A` to select all visible rows, `Escape` to clear selection, and `F5` to refresh.
 - Destructive or state-changing confirmation dialogs default to the safe cancel action.
 - Make long paths selectable and copyable, and allow table columns to be resized.
 - Persist useful window geometry, but clamp restored coordinates and dimensions to the currently visible desktop after monitor changes.
@@ -448,6 +452,7 @@ The repository must include:
 - `requirements-build.txt` for isolated executable-build dependencies;
 - `README.md` with setup, development commands, safety behavior, and supported Python versions;
 - `AGENTS.md` containing implementation constraints for coding agents;
+- `ARCHITECTURE.md` describing implemented MVC boundaries, threading, state, and safety flow;
 - `.gitignore`;
 - `build.bat` for producing the standalone Windows executable;
 - `deploy.bat` for producing a clean source-distribution ZIP under `dist`;
@@ -456,6 +461,6 @@ The repository must include:
 
 Continuous integration must run Ruff formatting checks, Ruff linting, `mypy --strict`, and pytest without Flight Simulator installed and without accessing any real Community directory. A license must be selected by the repository owner before public distribution; do not infer or add one automatically.
 
-`deploy.bat` must be runnable from any working directory, validate its required inputs, and create `dist\flightsimulator_mod_manager.zip`. Include `src`, `README.md`, `SPECIFICATION.md`, `pyproject.toml`, `requirements.txt`, and `LICENSE` when present. Exclude tests, Git and GitHub metadata, agent instructions, development requirements, caches, logs, local settings, and virtual environments. Repeated execution may replace only that exact generated archive.
+`deploy.bat` must be runnable from any working directory, validate its required inputs, and create `dist\flightsimulator_mod_manager.zip`. Include `src`, `README.md`, `SPECIFICATION.md`, `ARCHITECTURE.md`, `pyproject.toml`, `requirements.txt`, and `LICENSE` when present. Exclude tests, Git and GitHub metadata, agent instructions, development requirements, caches, logs, local settings, and virtual environments. Repeated execution may replace only that exact generated archive.
 
 `build.bat` must also be runnable from any working directory. It selects the newest installed Python 3 interpreter, validates that it is Python 3.13 or newer, validates the application entry point, creates an isolated temporary virtual environment, installs runtime and build requirements, and invokes PyInstaller in one-file windowed mode. The only persistent build artifact is `dist\FlightSimulatorModManager.exe`; temporary environments, generated `.spec` files, and PyInstaller work output must be removed after success or failure. It may replace only that exact executable and must not clear unrelated contents from `dist`.

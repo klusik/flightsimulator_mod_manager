@@ -1,8 +1,8 @@
 # Flight Simulator Mod Manager
 
-A planned Windows desktop application for enabling and disabling Microsoft Flight Simulator 2024 Community packages through safe directory moves.
+A Windows desktop application for enabling and disabling Microsoft Flight Simulator 2024 Community packages through safe directory moves.
 
-The project is currently in its specification and scaffolding phase. Application behavior has not yet been implemented. See [SPECIFICATION.md](SPECIFICATION.md) for the complete product, safety, architecture, and acceptance requirements.
+The project has a functional first implementation and remains under active development. See [SPECIFICATION.md](SPECIFICATION.md) for the product and safety contract and [ARCHITECTURE.md](ARCHITECTURE.md) for the implemented component design.
 
 ## Core approach
 
@@ -13,6 +13,18 @@ The project is currently in its specification and scaffolding phase. Application
 - Packages are moved as complete directories; their contents are not edited.
 - Cross-volume moves, destination conflicts, links, merges, overwrites, and deletions are rejected in version one.
 - Close Flight Simulator before changing package state.
+
+## Using the interface
+
+- Choose or confirm the active Community and disabled-mods directories.
+- Use the search field to filter by title, directory, creator, manufacturer, or version.
+- Package states use symbols as well as words: `●` enabled, `○` disabled, `⚠` conflicted, and `✕` invalid.
+- **Select all** selects every visible filtered row; **Clear** removes the selection.
+- Use `Ctrl+A` to select visible rows, `Escape` to clear selection, and `F5` to refresh.
+- Enable and disable buttons activate only when the current selection contains applicable packages.
+- Both table scrollbars support large package collections and long metadata.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the implemented component and threading design.
 
 ## Development setup
 

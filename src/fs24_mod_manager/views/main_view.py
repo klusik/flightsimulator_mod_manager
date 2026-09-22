@@ -6,7 +6,7 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
 from fs24_mod_manager.config import Config
-from fs24_mod_manager.models.package_info import PackageInfo
+from fs24_mod_manager.models.package_info import PackageInfo, PackageStatus
 
 
 class MainView:
@@ -19,12 +19,17 @@ class MainView:
         """
         self.root = root
         root.title(Config.APP_NAME)
+        root.minsize(820, 520)
         self.community_var = tk.StringVar()
         self.disabled_var = tk.StringVar()
         self.search_var = tk.StringVar()
         self.status_var = tk.StringVar(value="Ready")
+        self.summary_var = tk.StringVar(value="No packages loaded")
+        self.selection_var = tk.StringVar(value="0 selected")
         self._packages: dict[str, PackageInfo] = {}
+        self._busy = False
         self._build()
+        self._configure_styles()
 
     def bind_actions(
         self,
@@ -49,16 +54,30 @@ class MainView:
         self.refresh_button.configure(command=refresh)
         self.enable_button.configure(command=enable)
         self.disable_button.configure(command=disable)
+        self.select_all_button.configure(command=self.select_all)
+        self.clear_selection_button.configure(command=self.unselect_all)
         self.search_var.trace_add("write", lambda *_: self._filter())
+        self.tree.bind("<<TreeviewSelect>>", self._on_selection_changed)
+        self.root.bind("<Control-a>", self._select_all_event)
+        self.root.bind("<Control-A>", self._select_all_event)
+        self.root.bind("<Escape>", self._unselect_all_event)
+        self.root.bind("<F5>", lambda _event: refresh())
         self.root.protocol("WM_DELETE_WINDOW", close)
 
     def show_packages(self, packages: list[PackageInfo]) -> None:
-        """Replace table contents.
+        """Replace table contents while preserving matching selections.
 
         @param packages: Current package snapshot.
         """
+        selected_identities = {package.identity for package in self.selected_packages()}
         self._packages = {str(index): package for index, package in enumerate(packages)}
         self._filter()
+        preserved = [
+            key for key, item in self._packages.items() if item.identity in selected_identities
+        ]
+        self.tree.selection_set(preserved)
+        self._update_summary()
+        self._update_action_states()
 
     def selected_packages(self) -> list[PackageInfo]:
         """Return selected visible packages.
@@ -66,6 +85,16 @@ class MainView:
         @return: Selected package models.
         """
         return [self._packages[item] for item in self.tree.selection() if item in self._packages]
+
+    def select_all(self) -> None:
+        """Select every package currently visible after filtering."""
+        self.tree.selection_set(self.tree.get_children())
+        self._update_action_states()
+
+    def unselect_all(self) -> None:
+        """Clear the current package selection."""
+        self.tree.selection_remove(self.tree.selection())
+        self._update_action_states()
 
     def choose_directory(self, initial: Path | None) -> Path | None:
         """Open a directory picker.
@@ -97,62 +126,102 @@ class MainView:
 
         @param busy: Whether work is active.
         """
+        self._busy = busy
         state = tk.DISABLED if busy else tk.NORMAL
-        for widget in (
-            self.community_button,
-            self.disabled_button,
-            self.refresh_button,
-            self.enable_button,
-            self.disable_button,
-        ):
+        for widget in (self.community_button, self.disabled_button, self.refresh_button):
             widget.configure(state=state)
+        self._update_action_states()
 
     def _build(self) -> None:
-        """Construct widgets and layout."""
-        frame = ttk.Frame(self.root, padding=10)
-        frame.pack(fill=tk.BOTH, expand=True)
+        """Construct the structured, resizable main-window layout."""
+        outer = ttk.Frame(self.root, padding=12)
+        outer.pack(fill=tk.BOTH, expand=True)
+        heading = ttk.Frame(outer)
+        heading.grid(row=0, column=0, sticky=tk.EW, pady=(0, 10))
+        ttk.Label(heading, text=Config.APP_NAME, style="Title.TLabel").pack(side=tk.LEFT)
+        ttk.Label(heading, textvariable=self.summary_var, style="Summary.TLabel").pack(
+            side=tk.RIGHT
+        )
+        paths = ttk.LabelFrame(outer, text="Package locations", padding=10)
+        paths.grid(row=1, column=0, sticky=tk.EW)
         for row, (label, variable) in enumerate(
-            (("Community", self.community_var), ("Disabled", self.disabled_var))
+            (("Community", self.community_var), ("Disabled mods", self.disabled_var))
         ):
-            ttk.Label(frame, text=label).grid(row=row, column=0, sticky=tk.W, padx=(0, 8), pady=3)
-            ttk.Entry(frame, textvariable=variable, state="readonly").grid(
+            ttk.Label(paths, text=label).grid(row=row, column=0, sticky=tk.W, padx=(0, 8), pady=3)
+            ttk.Entry(paths, textvariable=variable, state="readonly").grid(
                 row=row, column=1, sticky=tk.EW, pady=3
             )
-        self.community_button = ttk.Button(frame, text="Choose…")
+        self.community_button = ttk.Button(paths, text="Browse…")
         self.community_button.grid(row=0, column=2, padx=(8, 0))
-        self.disabled_button = ttk.Button(frame, text="Choose…")
+        self.disabled_button = ttk.Button(paths, text="Browse…")
         self.disabled_button.grid(row=1, column=2, padx=(8, 0))
-        ttk.Label(frame, text="Search").grid(row=2, column=0, sticky=tk.W, pady=(8, 3))
-        ttk.Entry(frame, textvariable=self.search_var).grid(
-            row=2, column=1, sticky=tk.EW, pady=(8, 3)
-        )
-        self.refresh_button = ttk.Button(frame, text="Refresh")
-        self.refresh_button.grid(row=2, column=2, padx=(8, 0), pady=(8, 3))
+        paths.columnconfigure(1, weight=1)
+        toolbar = ttk.Frame(outer)
+        toolbar.grid(row=2, column=0, sticky=tk.EW, pady=(10, 6))
+        ttk.Label(toolbar, text="Search").pack(side=tk.LEFT)
+        self.search_entry = ttk.Entry(toolbar, textvariable=self.search_var, width=32)
+        self.search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(8, 12))
+        self.select_all_button = ttk.Button(toolbar, text="☑ Select all")
+        self.select_all_button.pack(side=tk.LEFT)
+        self.clear_selection_button = ttk.Button(toolbar, text="☐ Clear", width=10)
+        self.clear_selection_button.pack(side=tk.LEFT, padx=6)
+        self.refresh_button = ttk.Button(toolbar, text="↻ Refresh", width=11)
+        self.refresh_button.pack(side=tk.LEFT)
+        table = ttk.Frame(outer)
+        table.grid(row=3, column=0, sticky=tk.NSEW)
         self.tree = ttk.Treeview(
-            frame,
-            columns=("name", "version", "creator", "directory", "status"),
+            table,
+            columns=("state", "name", "version", "creator", "directory", "status"),
             show="headings",
             selectmode="extended",
         )
-        for key, title, width in (
-            ("name", "Name", 240),
-            ("version", "Version", 80),
-            ("creator", "Creator", 150),
-            ("directory", "Directory", 230),
-            ("status", "Status", 90),
-        ):
+        columns = (
+            ("state", "", 38, False),
+            ("name", "Name", 250, True),
+            ("version", "Version", 80, False),
+            ("creator", "Creator", 160, True),
+            ("directory", "Directory", 260, True),
+            ("status", "Status", 95, False),
+        )
+        for key, title, width, stretch in columns:
             self.tree.heading(key, text=title)
-            self.tree.column(key, width=width, stretch=True)
-        self.tree.grid(row=3, column=0, columnspan=3, sticky=tk.NSEW, pady=8)
-        actions = ttk.Frame(frame)
-        actions.grid(row=4, column=0, columnspan=3, sticky=tk.EW)
-        self.enable_button = ttk.Button(actions, text="Enable")
+            if key in {"state", "version", "status"}:
+                self.tree.column(key, width=width, minwidth=width, stretch=stretch, anchor="center")
+            else:
+                self.tree.column(key, width=width, minwidth=width, stretch=stretch, anchor="w")
+        vertical = ttk.Scrollbar(table, orient=tk.VERTICAL, command=self.tree.yview)
+        horizontal = ttk.Scrollbar(table, orient=tk.HORIZONTAL, command=self.tree.xview)
+        self.tree.configure(yscrollcommand=vertical.set, xscrollcommand=horizontal.set)
+        self.tree.grid(row=0, column=0, sticky=tk.NSEW)
+        vertical.grid(row=0, column=1, sticky=tk.NS)
+        horizontal.grid(row=1, column=0, sticky=tk.EW)
+        table.columnconfigure(0, weight=1)
+        table.rowconfigure(0, weight=1)
+        actions = ttk.Frame(outer)
+        actions.grid(row=4, column=0, sticky=tk.EW, pady=(10, 0))
+        self.enable_button = ttk.Button(actions, text="✓ Enable selected")
         self.enable_button.pack(side=tk.LEFT)
-        self.disable_button = ttk.Button(actions, text="Disable")
+        self.disable_button = ttk.Button(actions, text="○ Disable selected")
         self.disable_button.pack(side=tk.LEFT, padx=8)
-        ttk.Label(actions, textvariable=self.status_var).pack(side=tk.RIGHT)
-        frame.columnconfigure(1, weight=1)
-        frame.rowconfigure(3, weight=1)
+        ttk.Label(actions, textvariable=self.selection_var).pack(side=tk.LEFT, padx=8)
+        ttk.Separator(outer).grid(row=5, column=0, sticky=tk.EW, pady=(10, 6))
+        ttk.Label(outer, textvariable=self.status_var, anchor=tk.W).grid(
+            row=6, column=0, sticky=tk.EW
+        )
+        outer.columnconfigure(0, weight=1)
+        outer.rowconfigure(3, weight=1)
+
+    def _configure_styles(self) -> None:
+        """Apply lightweight native-theme presentation styles."""
+        style = ttk.Style(self.root)
+        style.configure("Title.TLabel", font=("Segoe UI", 15, "bold"))
+        style.configure("Summary.TLabel", foreground="#555555")
+        style.configure("Treeview", rowheight=25)
+        style.configure("Treeview.Heading", font=("Segoe UI", 9, "bold"))
+        self.tree.tag_configure(PackageStatus.ENABLED.value, foreground="#167548")
+        self.tree.tag_configure(PackageStatus.DISABLED.value, foreground="#666666")
+        self.tree.tag_configure(PackageStatus.CONFLICTED.value, foreground="#a15c00")
+        self.tree.tag_configure(PackageStatus.INVALID.value, foreground="#a4262c")
 
     def _filter(self) -> None:
         """Apply the current case-insensitive search text."""
@@ -170,15 +239,82 @@ class MainView:
             ).casefold()
             if query and query not in searchable:
                 continue
-            self.tree.insert(
-                "",
-                tk.END,
-                iid=key,
-                values=(
-                    package.title,
-                    package.version,
-                    package.creator,
-                    package.directory_name,
-                    package.status.value,
-                ),
+            values = (
+                self._status_symbol(package.status),
+                package.title,
+                package.version,
+                package.creator,
+                package.directory_name,
+                package.status.value,
             )
+            self.tree.insert("", tk.END, iid=key, values=values, tags=(package.status.value,))
+        self._update_summary()
+        self._update_action_states()
+
+    def _status_symbol(self, status: PackageStatus) -> str:
+        """Return a text icon that remains meaningful without color.
+
+        @param status: Package status.
+        @return: Compact status symbol.
+        """
+        symbols = {
+            PackageStatus.ENABLED: "●",
+            PackageStatus.DISABLED: "○",
+            PackageStatus.CONFLICTED: "⚠",
+            PackageStatus.INVALID: "✕",
+        }
+        return symbols[status]
+
+    def _update_summary(self) -> None:
+        """Update total and filtered package counts."""
+        visible = len(self.tree.get_children())
+        total = len(self._packages)
+        enabled = sum(item.status is PackageStatus.ENABLED for item in self._packages.values())
+        disabled = sum(item.status is PackageStatus.DISABLED for item in self._packages.values())
+        filtered = f" · {visible} shown" if visible != total else ""
+        self.summary_var.set(
+            f"{total} packages · {enabled} enabled · {disabled} disabled{filtered}"
+        )
+
+    def _update_action_states(self) -> None:
+        """Keep selection counters and action availability accurate."""
+        selected = self.selected_packages()
+        self.selection_var.set(f"{len(selected)} selected")
+        can_enable = any(item.status is PackageStatus.DISABLED for item in selected)
+        can_disable = any(item.status is PackageStatus.ENABLED for item in selected)
+        self.enable_button.configure(
+            state=tk.NORMAL if can_enable and not self._busy else tk.DISABLED
+        )
+        self.disable_button.configure(
+            state=tk.NORMAL if can_disable and not self._busy else tk.DISABLED
+        )
+        selection_state = tk.NORMAL if self.tree.get_children() and not self._busy else tk.DISABLED
+        self.select_all_button.configure(state=selection_state)
+        self.clear_selection_button.configure(
+            state=tk.NORMAL if selected and not self._busy else tk.DISABLED
+        )
+
+    def _on_selection_changed(self, _event: tk.Event[tk.Misc]) -> None:
+        """React to mouse or keyboard selection changes.
+
+        @param _event: Tk selection event.
+        """
+        self._update_action_states()
+
+    def _select_all_event(self, _event: tk.Event[tk.Misc]) -> str:
+        """Handle the select-all keyboard shortcut.
+
+        @param _event: Tk keyboard event.
+        @return: Tk event propagation directive.
+        """
+        self.select_all()
+        return "break"
+
+    def _unselect_all_event(self, _event: tk.Event[tk.Misc]) -> str:
+        """Handle the clear-selection keyboard shortcut.
+
+        @param _event: Tk keyboard event.
+        @return: Tk event propagation directive.
+        """
+        self.unselect_all()
+        return "break"
