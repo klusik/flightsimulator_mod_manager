@@ -58,7 +58,7 @@ It creates `dist\flightsimulator_mod_manager.zip`, replacing only an existing ar
 
 ## Project status
 
-The repository contains planning and development configuration only. Implementation should follow `SPECIFICATION.md` and `AGENTS.md`.
+The first implementation draft includes the typed model and service layers, safe package scanning and moves, settings persistence, Community discovery, a Tkinter MVC interface, and executable packaging. Remaining version-one work is tracked against `SPECIFICATION.md`.
 
 ## License
 
