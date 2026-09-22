@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flightsimulator-mod-manager"
+version = "0.1.0"
+description = "A safe Tkinter manager for Microsoft Flight Simulator 2024 Community packages."
+readme = "README.md"
+requires-python = ">=3.13"
+authors = [
+  { name = "Rudolf Klusal" },
+]
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+# Target the minimum supported version; newer interpreters remain supported.
+target-version = "py313"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["B", "D", "E", "F", "I", "SIM", "UP"]
+ignore = ["D203", "D213"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D100", "D103"]
+
+[tool.mypy]
+# Check compatibility with the minimum supported version, not the local interpreter version.
+python_version = "3.13"
+strict = true
+mypy_path = "src"
+files = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers"
+pythonpath = ["src"]
+testpaths = ["tests"]
