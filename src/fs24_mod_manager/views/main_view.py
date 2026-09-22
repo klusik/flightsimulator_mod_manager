@@ -2,6 +2,7 @@
 
 import tkinter as tk
 from collections.abc import Callable
+from functools import partial
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
@@ -18,16 +19,20 @@ class MainView:
         @param root: Tk application root.
         """
         self.root = root
-        root.title(Config.APP_NAME)
+        root.title(f"{Config.APP_NAME} {Config.APP_VERSION}")
         root.minsize(820, 520)
         self.community_var = tk.StringVar()
         self.disabled_var = tk.StringVar()
         self.search_var = tk.StringVar()
+        self.filter_var = tk.StringVar(value="All")
         self.status_var = tk.StringVar(value="Ready")
         self.summary_var = tk.StringVar(value="No packages loaded")
         self.selection_var = tk.StringVar(value="0 selected")
         self._packages: dict[str, PackageInfo] = {}
         self._busy = False
+        self._sort_column = "name"
+        self._sort_reverse = False
+        self._column_titles: dict[str, str] = {}
         self._build()
         self._configure_styles()
 
@@ -57,6 +62,7 @@ class MainView:
         self.select_all_button.configure(command=self.select_all)
         self.clear_selection_button.configure(command=self.unselect_all)
         self.search_var.trace_add("write", lambda *_: self._filter())
+        self.filter_var.trace_add("write", lambda *_: self._filter())
         self.tree.bind("<<TreeviewSelect>>", self._on_selection_changed)
         self.root.bind("<Control-a>", self._select_all_event)
         self.root.bind("<Control-A>", self._select_all_event)
@@ -138,7 +144,11 @@ class MainView:
         outer.pack(fill=tk.BOTH, expand=True)
         heading = ttk.Frame(outer)
         heading.grid(row=0, column=0, sticky=tk.EW, pady=(0, 10))
-        ttk.Label(heading, text=Config.APP_NAME, style="Title.TLabel").pack(side=tk.LEFT)
+        ttk.Label(
+            heading,
+            text=f"{Config.APP_NAME} {Config.APP_VERSION}",
+            style="Title.TLabel",
+        ).pack(side=tk.LEFT)
         ttk.Label(heading, textvariable=self.summary_var, style="Summary.TLabel").pack(
             side=tk.RIGHT
         )
@@ -161,6 +171,15 @@ class MainView:
         ttk.Label(toolbar, text="Search").pack(side=tk.LEFT)
         self.search_entry = ttk.Entry(toolbar, textvariable=self.search_var, width=32)
         self.search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(8, 12))
+        ttk.Label(toolbar, text="Show").pack(side=tk.LEFT)
+        self.filter_combo = ttk.Combobox(
+            toolbar,
+            textvariable=self.filter_var,
+            values=("All", "Enabled", "Disabled", "Conflicted", "Invalid"),
+            state="readonly",
+            width=11,
+        )
+        self.filter_combo.pack(side=tk.LEFT, padx=(6, 12))
         self.select_all_button = ttk.Button(toolbar, text="☑ Select all")
         self.select_all_button.pack(side=tk.LEFT)
         self.clear_selection_button = ttk.Button(toolbar, text="☐ Clear", width=10)
@@ -184,7 +203,13 @@ class MainView:
             ("status", "Status", 95, False),
         )
         for key, title, width, stretch in columns:
-            self.tree.heading(key, text=title)
+            self._column_titles[key] = title
+            marker = " ▲" if key == self._sort_column else ""
+            self.tree.heading(
+                key,
+                text=f"{title}{marker}",
+                command=partial(self._change_sort, key),
+            )
             if key in {"state", "version", "status"}:
                 self.tree.column(key, width=width, minwidth=width, stretch=stretch, anchor="center")
             else:
@@ -224,20 +249,20 @@ class MainView:
         self.tree.tag_configure(PackageStatus.INVALID.value, foreground="#a4262c")
 
     def _filter(self) -> None:
-        """Apply the current case-insensitive search text."""
+        """Apply name search, state filtering, and the current ordering."""
         query = self.search_var.get().casefold().strip()
+        status_filter = self.filter_var.get()
         self.tree.delete(*self.tree.get_children())
-        for key, package in self._packages.items():
-            searchable = " ".join(
-                (
-                    package.title,
-                    package.directory_name,
-                    package.creator,
-                    package.manufacturer,
-                    package.version,
-                )
-            ).casefold()
+        ordered = sorted(
+            self._packages.items(),
+            key=lambda item: self._sort_value(item[1]),
+            reverse=self._sort_reverse,
+        )
+        for key, package in ordered:
+            searchable = f"{package.title} {package.directory_name}".casefold()
             if query and query not in searchable:
+                continue
+            if status_filter != "All" and package.status.value != status_filter:
                 continue
             values = (
                 self._status_symbol(package.status),
@@ -250,6 +275,39 @@ class MainView:
             self.tree.insert("", tk.END, iid=key, values=values, tags=(package.status.value,))
         self._update_summary()
         self._update_action_states()
+
+    def _change_sort(self, column: str) -> None:
+        """Select a column order or reverse the active order.
+
+        @param column: Tree column identifier.
+        """
+        if column == self._sort_column:
+            self._sort_reverse = not self._sort_reverse
+        else:
+            self._sort_column = column
+            self._sort_reverse = False
+        for key, title in self._column_titles.items():
+            marker = ""
+            if key == self._sort_column:
+                marker = " ▼" if self._sort_reverse else " ▲"
+            self.tree.heading(key, text=f"{title}{marker}")
+        self._filter()
+
+    def _sort_value(self, package: PackageInfo) -> tuple[str, str]:
+        """Return a deterministic case-insensitive table sort key.
+
+        @param package: Package represented by a row.
+        @return: Selected column value and directory-name tie breaker.
+        """
+        values = {
+            "state": package.status.value,
+            "name": package.title,
+            "version": package.version,
+            "creator": package.creator,
+            "directory": package.directory_name,
+            "status": package.status.value,
+        }
+        return values[self._sort_column].casefold(), package.directory_name.casefold()
 
     def _status_symbol(self, status: PackageStatus) -> str:
         """Return a text icon that remains meaningful without color.

@@ -17,7 +17,9 @@ The project has a functional first implementation and remains under active devel
 ## Using the interface
 
 - Choose or confirm the active Community and disabled-mods directories.
-- Use the search field to filter by title, directory, creator, manufacturer, or version.
+- Use the search field to filter by mod display name or package-directory name.
+- Use the **Show** filter to display all, enabled, disabled, conflicted, or invalid packages.
+- Click a table heading to order by that column; click the active heading again to reverse it.
 - Package states use symbols as well as words: `●` enabled, `○` disabled, `⚠` conflicted, and `✕` invalid.
 - **Select all** selects every visible filtered row; **Clear** removes the selection.
 - Use `Ctrl+A` to select visible rows, `Escape` to clear selection, and `F5` to refresh.
@@ -81,6 +83,8 @@ The version argument is optional and defaults to `0.1.0`. The script rebuilds th
 ## Project status
 
 The first implementation draft includes the typed model and service layers, safe package scanning and moves, settings persistence, Community discovery, a Tkinter MVC interface, and executable packaging. Remaining version-one work is tracked against `SPECIFICATION.md`.
+
+The current development and release version is `0.1.0`. It remains `0.1.0` until that version is formally released; subsequent work will then advance to the next planned version.
 
 ## License
 

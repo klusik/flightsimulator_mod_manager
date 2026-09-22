@@ -7,6 +7,7 @@ class Config:
     """Provide immutable application-wide defaults."""
 
     APP_NAME: str = "Flight Simulator Mod Manager"
+    APP_VERSION: str = "0.1.0"
     APP_DIRECTORY: str = "FS24ModManager"
     SETTINGS_VERSION: int = 1
     SETTINGS_FILENAME: str = "settings.json"

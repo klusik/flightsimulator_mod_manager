@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flightsimulator-mod-manager"
-version = "0.0.0"
+version = "0.1.0"
 description = "A safe Tkinter manager for Microsoft Flight Simulator 2024 Community packages."
 readme = "README.md"
 requires-python = ">=3.13"

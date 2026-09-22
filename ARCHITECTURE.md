@@ -42,7 +42,7 @@ The main window contains:
 
 1. A title and live package summary.
 2. Read-only Community and disabled-root paths with browse actions.
-3. Search, selection, and refresh controls.
+3. Name search, package-state filtering, selection, and refresh controls.
 4. A vertically and horizontally scrollable package table.
 5. Selection-aware enable/disable actions and a status line.
 
@@ -56,6 +56,8 @@ Package state is communicated redundantly by symbol, text, and color:
 | `✕` | Invalid |
 
 Keyboard controls are `Ctrl+A` for all visible rows, `Escape` to clear selection, and `F5` to refresh.
+
+The view performs presentation-only filtering and ordering over the current immutable package snapshot. Name search matches the display title and package-directory name. The state selector filters enabled, disabled, conflicted, or invalid packages. Clicking a heading selects its case-insensitive ordering and a second click reverses it; the directory name is the deterministic tie breaker.
 
 ## Persistence and packaging
 

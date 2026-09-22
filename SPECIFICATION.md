@@ -139,6 +139,9 @@ Use one main window with:
 - configured disabled-mods path and a **Choose…** action;
 - a rescan/refresh action;
 - a searchable table of packages;
+- name search limited to mod display names and package-directory names;
+- a state filter for all, enabled, disabled, conflicted, and invalid packages;
+- clickable table headings for ascending and descending ordering with a visible direction marker;
 - horizontal and vertical table scrollbars;
 - columns for name, version, directory, and status;
 - redundant state symbols, text, and color for quick recognition and accessibility;
@@ -467,3 +470,7 @@ Continuous integration must run Ruff formatting checks, Ruff linting, `mypy --st
 `build.bat` must also be runnable from any working directory. It selects the newest installed Python 3 interpreter, validates that it is Python 3.13 or newer, validates the application entry point, creates an isolated temporary virtual environment, installs runtime and build requirements, and invokes PyInstaller in one-file windowed mode. The only persistent build artifact is `dist\FlightSimulatorModManager.exe`; temporary environments, generated `.spec` files, and PyInstaller work output must be removed after success or failure. It may replace only that exact executable and must not clear unrelated contents from `dist`.
 
 `installer.bat` accepts an optional semantic version, rebuilds the application executable, prefers the Inno Setup 7 compiler with an Inno Setup 6 compatibility fallback, and creates `dist\FlightSimulatorModManager-<version>-Setup.exe`. The installer must default to per-user installation without administrator rights, register under Windows Installed apps, create a Start Menu shortcut discoverable through Windows Search, offer an unchecked optional desktop shortcut, and provide an uninstaller. The Inno Setup definition belongs in `packaging/installer.iss`; compiled installers remain ignored build artifacts.
+
+## 22. Version policy
+
+The project version is `0.1.0` throughout the current development cycle and remains `0.1.0` until that version is formally released. The Python package metadata, visible application version, executable/installer build inputs, documentation, and release artifacts must agree. Version advancement happens only after the `0.1.0` release is complete and the repository owner explicitly selects the next version.
