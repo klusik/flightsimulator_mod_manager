@@ -2,7 +2,7 @@
 
 A Windows desktop application for enabling and disabling Microsoft Flight Simulator 2024 Community packages through safe directory moves.
 
-The project has a functional first implementation and remains under active development. See [SPECIFICATION.md](SPECIFICATION.md) for the product and safety contract and [ARCHITECTURE.md](ARCHITECTURE.md) for the implemented component design.
+The project has a functional first implementation and remains under active development. See [SPECIFICATION.md](SPECIFICATION.md) for the product and safety contract, [ARCHITECTURE.md](ARCHITECTURE.md) for the implemented component design, and [PATCH_NOTES.md](PATCH_NOTES.md) for release history.
 
 ## Core approach
 
@@ -68,7 +68,7 @@ Run the deployment script from any working directory:
 .\deploy.bat
 ```
 
-It creates `dist\flightsimulator_mod_manager.zip`, replacing only an existing archive with that exact name. The ZIP contains the application source, runtime and build requirements, executable and installer build definitions, project metadata, specification, README, and `LICENSE` when one exists. Development test tools, tests, repository metadata, caches, logs, and local settings are excluded.
+It creates `dist\flightsimulator_mod_manager.zip`, replacing only an existing archive with that exact name. The ZIP contains the application source, runtime and build requirements, executable and installer build definitions, project metadata, specification, architecture, patch notes, release workflow, README, and `LICENSE` when one exists. Development test tools, tests, repository metadata, caches, logs, and local settings are excluded.
 
 ## Build the Windows installer
 
@@ -85,6 +85,8 @@ The version argument is optional and defaults to `0.1.0`. The script rebuilds th
 The first implementation draft includes the typed model and service layers, safe package scanning and moves, settings persistence, Community discovery, a Tkinter MVC interface, and executable packaging. Remaining version-one work is tracked against `SPECIFICATION.md`.
 
 The current development and release version is `0.1.0`. It remains `0.1.0` until that version is formally released; subsequent work will then advance to the next planned version.
+
+Maintainers should follow [RELEASE.md](RELEASE.md) and use [PATCH_NOTES_TEMPLATE.md](PATCH_NOTES_TEMPLATE.md) when preparing later releases.
 
 ## License
 

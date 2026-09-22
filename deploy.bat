@@ -12,7 +12,7 @@ if not exist "src\fs24_mod_manager\__init__.py" (
     exit /b 1
 )
 
-for %%F in (README.md SPECIFICATION.md ARCHITECTURE.md pyproject.toml requirements.txt requirements-build.txt build.bat installer.bat) do (
+for %%F in (README.md SPECIFICATION.md ARCHITECTURE.md PATCH_NOTES.md PATCH_NOTES_TEMPLATE.md RELEASE.md pyproject.toml requirements.txt requirements-build.txt build.bat installer.bat) do (
     if not exist "%%F" (
         echo ERROR: Required deployment file not found: %%F
         exit /b 1
@@ -37,7 +37,7 @@ if exist "%ARCHIVE_PATH%" (
 
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
     "$ErrorActionPreference = 'Stop';" ^
-    "$deploymentFiles = @('src', 'packaging', 'README.md', 'SPECIFICATION.md', 'ARCHITECTURE.md', 'pyproject.toml', 'requirements.txt', 'requirements-build.txt', 'build.bat', 'installer.bat');" ^
+    "$deploymentFiles = @('src', 'packaging', 'README.md', 'SPECIFICATION.md', 'ARCHITECTURE.md', 'PATCH_NOTES.md', 'PATCH_NOTES_TEMPLATE.md', 'RELEASE.md', 'pyproject.toml', 'requirements.txt', 'requirements-build.txt', 'build.bat', 'installer.bat');" ^
     "if (Test-Path -LiteralPath 'LICENSE') { $deploymentFiles += 'LICENSE' };" ^
     "$temporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath());" ^
     "$staging = Join-Path $temporaryRoot ('fs24-mod-manager-deploy-' + [guid]::NewGuid().ToString('N'));" ^
