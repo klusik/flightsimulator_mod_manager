@@ -12,7 +12,7 @@ if not exist "src\fs24_mod_manager\__init__.py" (
     exit /b 1
 )
 
-for %%F in (README.md SPECIFICATION.md ARCHITECTURE.md pyproject.toml requirements.txt) do (
+for %%F in (README.md SPECIFICATION.md ARCHITECTURE.md pyproject.toml requirements.txt requirements-build.txt build.bat installer.bat) do (
     if not exist "%%F" (
         echo ERROR: Required deployment file not found: %%F
         exit /b 1
@@ -37,9 +37,22 @@ if exist "%ARCHIVE_PATH%" (
 
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
     "$ErrorActionPreference = 'Stop';" ^
-    "$deploymentFiles = @('src', 'README.md', 'SPECIFICATION.md', 'ARCHITECTURE.md', 'pyproject.toml', 'requirements.txt');" ^
+    "$deploymentFiles = @('src', 'packaging', 'README.md', 'SPECIFICATION.md', 'ARCHITECTURE.md', 'pyproject.toml', 'requirements.txt', 'requirements-build.txt', 'build.bat', 'installer.bat');" ^
     "if (Test-Path -LiteralPath 'LICENSE') { $deploymentFiles += 'LICENSE' };" ^
-    "Compress-Archive -LiteralPath $deploymentFiles -DestinationPath '%ARCHIVE_PATH%' -CompressionLevel Optimal -Force"
+    "$temporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath());" ^
+    "$staging = Join-Path $temporaryRoot ('fs24-mod-manager-deploy-' + [guid]::NewGuid().ToString('N'));" ^
+    "try {" ^
+    "  New-Item -ItemType Directory -Path $staging | Out-Null;" ^
+    "  foreach ($item in $deploymentFiles) { $name = [IO.Path]::GetFileName($item.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)); Copy-Item -LiteralPath $item -Destination (Join-Path $staging $name) -Recurse };" ^
+    "  Get-ChildItem -LiteralPath $staging -Directory -Filter '__pycache__' -Recurse | Remove-Item -Recurse -Force;" ^
+    "  Get-ChildItem -LiteralPath $staging -File -Recurse | Where-Object { $_.Extension -in '.pyc', '.pyo' } | Remove-Item -Force;" ^
+    "  $archiveItems = @(Get-ChildItem -LiteralPath $staging | Select-Object -ExpandProperty FullName);" ^
+    "  Compress-Archive -LiteralPath $archiveItems -DestinationPath '%ARCHIVE_PATH%' -CompressionLevel Optimal -Force;" ^
+    "} finally {" ^
+    "  $resolved = [IO.Path]::GetFullPath($staging);" ^
+    "  $prefix = [IO.Path]::Combine($temporaryRoot, 'fs24-mod-manager-deploy-');" ^
+    "  if ($resolved.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $resolved)) { Remove-Item -LiteralPath $resolved -Recurse -Force };" ^
+    "}"
 
 if errorlevel 1 (
     echo ERROR: Deployment archive creation failed.

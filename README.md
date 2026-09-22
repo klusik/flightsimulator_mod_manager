@@ -66,7 +66,17 @@ Run the deployment script from any working directory:
 .\deploy.bat
 ```
 
-It creates `dist\flightsimulator_mod_manager.zip`, replacing only an existing archive with that exact name. The ZIP contains the application source, runtime requirements, project metadata, specification, README, and `LICENSE` when one exists. Development tools, tests, repository metadata, caches, and local settings are excluded.
+It creates `dist\flightsimulator_mod_manager.zip`, replacing only an existing archive with that exact name. The ZIP contains the application source, runtime and build requirements, executable and installer build definitions, project metadata, specification, README, and `LICENSE` when one exists. Development test tools, tests, repository metadata, caches, logs, and local settings are excluded.
+
+## Build the Windows installer
+
+Install [Inno Setup 7](https://jrsoftware.org/isdl.php) (Inno Setup 6 remains supported as a fallback), then run:
+
+```powershell
+.\installer.bat 0.1.0
+```
+
+The version argument is optional and defaults to `0.1.0`. The script rebuilds the application first and creates `dist\FlightSimulatorModManager-<version>-Setup.exe`. The installer registers the application in Windows Installed apps, adds a Start Menu shortcut that is discoverable through Windows Search, offers an optional desktop shortcut, and installs an uninstaller. Installation defaults to the current user and does not require administrator rights.
 
 ## Project status
 

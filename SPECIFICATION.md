@@ -455,12 +455,15 @@ The repository must include:
 - `ARCHITECTURE.md` describing implemented MVC boundaries, threading, state, and safety flow;
 - `.gitignore`;
 - `build.bat` for producing the standalone Windows executable;
+- `installer.bat` and `packaging/installer.iss` for producing a registered Windows installer;
 - `deploy.bat` for producing a clean source-distribution ZIP under `dist`;
 - a `src` package layout and mirrored `tests` structure;
 - a GitHub Actions workflow running on Windows against the minimum supported Python 3.13 and the newest stable Python version adopted by the project.
 
 Continuous integration must run Ruff formatting checks, Ruff linting, `mypy --strict`, and pytest without Flight Simulator installed and without accessing any real Community directory. A license must be selected by the repository owner before public distribution; do not infer or add one automatically.
 
-`deploy.bat` must be runnable from any working directory, validate its required inputs, and create `dist\flightsimulator_mod_manager.zip`. Include `src`, `README.md`, `SPECIFICATION.md`, `ARCHITECTURE.md`, `pyproject.toml`, `requirements.txt`, and `LICENSE` when present. Exclude tests, Git and GitHub metadata, agent instructions, development requirements, caches, logs, local settings, and virtual environments. Repeated execution may replace only that exact generated archive.
+`deploy.bat` must be runnable from any working directory, validate its required inputs, and create `dist\flightsimulator_mod_manager.zip`. Include `src`, `packaging`, `README.md`, `SPECIFICATION.md`, `ARCHITECTURE.md`, `pyproject.toml`, `requirements.txt`, `requirements-build.txt`, `build.bat`, `installer.bat`, and `LICENSE` when present. Exclude tests, Git and GitHub metadata, agent instructions, development test requirements, caches, logs, local settings, and virtual environments. Repeated execution may replace only that exact generated archive.
 
 `build.bat` must also be runnable from any working directory. It selects the newest installed Python 3 interpreter, validates that it is Python 3.13 or newer, validates the application entry point, creates an isolated temporary virtual environment, installs runtime and build requirements, and invokes PyInstaller in one-file windowed mode. The only persistent build artifact is `dist\FlightSimulatorModManager.exe`; temporary environments, generated `.spec` files, and PyInstaller work output must be removed after success or failure. It may replace only that exact executable and must not clear unrelated contents from `dist`.
+
+`installer.bat` accepts an optional semantic version, rebuilds the application executable, prefers the Inno Setup 7 compiler with an Inno Setup 6 compatibility fallback, and creates `dist\FlightSimulatorModManager-<version>-Setup.exe`. The installer must default to per-user installation without administrator rights, register under Windows Installed apps, create a Start Menu shortcut discoverable through Windows Search, offer an unchecked optional desktop shortcut, and provide an uninstaller. The Inno Setup definition belongs in `packaging/installer.iss`; compiled installers remain ignored build artifacts.

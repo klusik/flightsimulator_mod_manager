@@ -59,7 +59,7 @@ Keyboard controls are `Ctrl+A` for all visible rows, `Escape` to clear selection
 
 ## Persistence and packaging
 
-Settings are stored under `%LOCALAPPDATA%\FS24ModManager` through temporary-file replacement. `build.bat` creates a single PyInstaller executable in `dist`; `deploy.bat` creates the source ZIP. Generated artifacts remain ignored by Git and are intended for GitHub Release assets.
+Settings are stored under `%LOCALAPPDATA%\FS24ModManager` through temporary-file replacement. `build.bat` creates a single PyInstaller executable in `dist`; `deploy.bat` creates the source ZIP. `installer.bat` rebuilds the executable and compiles `packaging/installer.iss` with Inno Setup, producing a per-user Windows installer with Start Menu registration and uninstall support. Generated artifacts remain ignored by Git and are intended for GitHub Release assets.
 
 ## Verification
 
